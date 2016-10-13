@@ -238,31 +238,31 @@ public class Qt5CPPGenerator extends DefaultCodegen implements CodegenConfig {
         if (p instanceof ArrayProperty) {
             ArrayProperty ap = (ArrayProperty) p;
             Property inner = ap.getItems();
-            return getSwaggerType(p) + "<" + getTypeDeclaration(inner) + ">*";
+            return getSwaggerType(p) + "<" + getTypeDeclaration(inner) + ">";
         } else if (p instanceof MapProperty) {
             MapProperty mp = (MapProperty) p;
             Property inner = mp.getAdditionalProperties();
-            return getSwaggerType(p) + "<QString, " + getTypeDeclaration(inner) + ">*";
+            return getSwaggerType(p) + "<QString, " + getTypeDeclaration(inner) + ">";
         }
         if (foundationClasses.contains(swaggerType)) {
-            return swaggerType + "*";
+            return swaggerType;
         } else if (languageSpecificPrimitives.contains(swaggerType)) {
             return toModelName(swaggerType);
         } else {
-            return swaggerType + "*";
+            return swaggerType;
         }
     }
 
     @Override
     public String toDefaultValue(Property p) {
         if (p instanceof StringProperty) {
-            return "new QString(\"\")";
+            return "\"\"";
         } else if (p instanceof BooleanProperty) {
             return "false";
         } else if (p instanceof DateProperty) {
-            return "NULL";
+            return "QDate()";
         } else if (p instanceof DateTimeProperty) {
-            return "NULL";
+            return "QDateTime()";
         } else if (p instanceof DoubleProperty) {
             return "0.0";
         } else if (p instanceof FloatProperty) {
@@ -280,21 +280,18 @@ public class Qt5CPPGenerator extends DefaultCodegen implements CodegenConfig {
         } else if (p instanceof MapProperty) {
             MapProperty ap = (MapProperty) p;
             String inner = getSwaggerType(ap.getAdditionalProperties());
-            return "new QMap<QString, " + inner + ">()";
+            return "QMap<QString, " + inner + ">()";
         } else if (p instanceof ArrayProperty) {
             ArrayProperty ap = (ArrayProperty) p;
             String inner = getSwaggerType(ap.getItems());
-            if (!languageSpecificPrimitives.contains(inner)) {
-                inner += "*";
-            }
-            return "new QList<" + inner + ">()";
+            return "QList<" + inner + ">()";
         }
         // else
         if (p instanceof RefProperty) {
             RefProperty rp = (RefProperty) p;
-            return "new " + toModelName(rp.getSimpleRef()) + "()";
+            return toModelName(rp.getSimpleRef()) + "()";
         }
-        return "NULL";
+        return "";
     }
 
 
