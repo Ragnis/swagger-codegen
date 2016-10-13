@@ -337,6 +337,11 @@ public class Qt5CPPGenerator extends DefaultCodegen implements CodegenConfig {
     }
 
     @Override
+    public String toParamName(String name) {
+        return name.replaceAll("[^A-Za-z0-9_]", "_").replaceAll("_+", "_");
+    }
+
+    @Override
     public String toApiName(String type) {
         return PREFIX + Character.toUpperCase(type.charAt(0)) + type.substring(1) + "Api";
     }
