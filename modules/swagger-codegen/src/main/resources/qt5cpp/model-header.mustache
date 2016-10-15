@@ -22,18 +22,17 @@ namespace Swagger {
 class {{classname}}: public SWGObject {
 public:
     {{classname}}();
-    {{classname}}(QString* json);
+    {{classname}}(const QString &json);
     virtual ~{{classname}}();
     void init();
-    void cleanup();
 
-    QString asJson ();
-    QJsonObject* asJsonObject();
-    void fromJsonObject(QJsonObject &json);
-    {{classname}}* fromJson(QString &jsonString);
+    QString asJson() const;
+    QJsonObject asJsonObject() const;
+    void fromJsonObject(const QJsonObject &json);
+    void fromJson(const QString &jsonString);
 
-    {{#vars}}{{{datatype}}} {{getter}}();
-    void {{setter}}({{{datatype}}} {{name}});
+    {{#vars}}{{{datatype}}} {{getter}}() const;
+    void {{setter}}(const {{{datatype}}} &{{name}});
     {{/vars}}
 
 private:

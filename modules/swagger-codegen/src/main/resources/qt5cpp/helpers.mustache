@@ -1,0 +1,141 @@
+{{>licenseInfo}}
+#ifndef SWGHELPERS_H
+#define SWGHELPERS_H
+
+#include <QtGlobal>
+#include <QDate>
+#include <QDateTime>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QList>
+#include <QString>
+#include <QVariant>
+
+#include "SWGObject.h"
+
+namespace Swagger
+{
+    QString
+    inline stringValue(const QString &value) {
+        return value;
+    }
+
+    QString
+    inline stringValue(const QDate &value) {
+        return value.toString();
+    }
+
+    QString
+    inline stringValue(qint32 value) {
+        return QString::number(value);
+    }
+
+    QString
+    inline stringValue(qint64 value) {
+        return QString::number(value);
+    }
+
+    QString
+    inline stringValue(bool value) {
+        return QString(value ? "true" : "false");
+    }
+
+    #define SWG_RT(_type) template<typename T, typename std::enable_if<std::is_same<_type, T>::value>::type* = nullptr>
+    #define SWG_RT_BASE(_type) template<typename T, typename std::enable_if<std::is_base_of<_type, T>::value>::type* = nullptr>
+
+    SWG_RT(bool)
+    inline T toValue(QJsonValue obj) {
+        return obj.toBool();
+    }
+
+    SWG_RT(QString)
+    inline T toValue(QJsonValue obj) {
+        return obj.toString();
+    }
+
+    SWG_RT(qint32)
+    inline qint32 toValue(QJsonValue obj) {
+        return obj.toInt();
+    }
+
+    SWG_RT(qint64)
+    inline qint64 toValue(QJsonValue obj) {
+        return obj.toVariant().toLongLong();
+    }
+
+    SWG_RT(float)
+    inline float toValue(QJsonValue obj) {
+        return obj.toDouble();
+    }
+
+    SWG_RT(double)
+    inline double toValue(QJsonValue obj) {
+        return obj.toDouble();
+    }
+
+    SWG_RT(QDateTime)
+    inline QDateTime toValue(QJsonValue obj) {
+        return obj.toVariant().toDateTime();
+    }
+
+    SWG_RT(QDate)
+    inline QDate toValue(QJsonValue obj) {
+        return obj.toVariant().toDate();
+    }
+
+    SWG_RT(QByteArray)
+    inline QByteArray toValue(QJsonValue obj) {
+        return QByteArray::fromBase64(QByteArray::fromStdString(obj.toString().toStdString()));
+    }
+
+    SWG_RT_BASE(SWGObject)
+    inline T toValue(QJsonValue val) {
+        T ret;
+        QJsonObject obj = val.toObject();
+        ret.fromJsonObject(obj);
+        return ret;
+    }
+
+    template<
+        template<typename> class C,
+        typename E,
+        typename std::enable_if<std::is_base_of<QList<E>, C<E>>::value>::type* = nullptr>
+    inline C<E> toValue(QJsonValue obj) {
+        QJsonArray arr = obj.toArray();
+        C<E> ret;
+
+        foreach (const QJsonValue &val, arr) {
+            ret.append(toValue<E>(val));
+        }
+
+        return ret;
+    }
+
+    inline QJsonValue toJsonValue(QString str) {
+        return QJsonValue(str);
+    }
+
+    inline QJsonValue toJsonValue(SWGObject obj) {
+        return QJsonValue(obj.asJsonObject());
+    }
+
+    template<typename E>
+    inline QJsonValue toJsonValue(QList<E> list) {
+        QJsonArray arr;
+
+        foreach ( const E &val, list )
+            arr.append(toJsonValue(val));
+
+        return arr;
+    }
+
+    template<typename T>
+    inline QJsonValue toJsonValue(T) {
+        return QJsonValue();
+    }
+
+    #undef SWG_RT
+    #undef SWG_RT_BASE
+}
+
+#endif // SWGHELPERS_H

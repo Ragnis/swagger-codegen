@@ -12,9 +12,9 @@
 namespace Swagger {
 
 
-{{classname}}::{{classname}}(QString* json) {
+{{classname}}::{{classname}}(const QString &json) {
     init();
-    this->fromJson(*json);
+    this->fromJson(json);
 }
 
 {{classname}}::{{classname}}() {
@@ -22,7 +22,6 @@ namespace Swagger {
 }
 
 {{classname}}::~{{classname}}() {
-    this->cleanup();
 }
 
 void
@@ -32,72 +31,54 @@ void
 }
 
 void
-{{classname}}::cleanup() {
-    {{#vars}}{{#complexType}}if({{name}} != NULL) {
-        {{#isContainer}}QList<{{complexType}}*>* arr = {{name}};
-        foreach({{complexType}}* o, *arr) {
-            delete o;
-        }
-        {{/isContainer}}delete {{name}};
-    }{{/complexType}}
-    {{/vars}}
-}
-
-{{classname}}*
-{{classname}}::fromJson(QString &json) {
+{{classname}}::fromJson(const QString &json) {
     QByteArray array (json.toStdString().c_str());
     QJsonDocument doc = QJsonDocument::fromJson(array);
     QJsonObject jsonObject = doc.object();
     this->fromJsonObject(jsonObject);
-    return this;
 }
 
 void
-{{classname}}::fromJsonObject(QJsonObject &pJson) {
-    {{#vars}}setValue(&{{name}}, pJson["{{name}}"], "{{baseType}}", "{{complexType}}");
-    {{/vars}}
+{{classname}}::fromJsonObject(const QJsonObject &pJson) {
+{{#vars}}
+    {{#isContainer}}
+    this->{{name}} = ::Swagger::toValue<{{{baseType}}}, {{complexType}}>(pJson["{{name}}"]);
+    {{/isContainer}}
+    {{^isContainer}}
+    this->{{name}} = ::Swagger::toValue<{{{datatype}}}>(pJson["{{name}}"]);
+    {{/isContainer}}
+{{/vars}}
 }
 
 QString
-{{classname}}::asJson ()
+{{classname}}::asJson () const
 {
-    QJsonObject* obj = this->asJsonObject();
+    QJsonObject obj = this->asJsonObject();
     
-    QJsonDocument doc(*obj);
+    QJsonDocument doc(obj);
     QByteArray bytes = doc.toJson();
     return QString(bytes);
 }
 
-QJsonObject*
-{{classname}}::asJsonObject() {
-    QJsonObject* obj = new QJsonObject();
-    {{#vars}}{{#complexType}}
-    {{^isContainer}}{{#complexType}}
-    toJsonValue(QString("{{name}}"), {{name}}, obj, QString("{{complexType}}"));
-    {{/complexType}}{{^complexType}}
-    else if({{name}} != NULL && *{{name}} != NULL) {
-      obj->insert("{{name}}", QJsonValue(*{{name}}));
-    }{{/complexType}}
-    {{/isContainer}}{{#isContainer}}
-    QList<{{complexType}}*>* {{name}}List = {{name}};
-    QJsonArray {{name}}JsonArray;
-    toJsonArray((QList<void*>*){{name}}, &{{name}}JsonArray, "{{name}}", "{{complexType}}");
+QJsonObject
+{{classname}}::asJsonObject() const {
+    QJsonObject obj;
 
-    obj->insert("{{name}}", {{name}}JsonArray);
-    {{/isContainer}}
-    {{/complexType}}{{^complexType}}obj->insert("{{name}}", QJsonValue({{name}}));{{/complexType}}
-    {{/vars}}
+{{#vars}}
+    {{#complexType}}obj.insert("{{name}}", toJsonValue(this->{{name}}));{{/complexType}}
+    {{^complexType}}obj.insert("{{name}}", QJsonValue(this->{{name}}));{{/complexType}}
+{{/vars}}
 
     return obj;
 }
 
 {{#vars}}
 {{{datatype}}}
-{{classname}}::{{getter}}() {
+{{classname}}::{{getter}}() const {
     return {{name}};
 }
 void
-{{classname}}::{{setter}}({{{datatype}}} {{name}}) {
+{{classname}}::{{setter}}(const {{{datatype}}} &{{name}}) {
     this->{{name}} = {{name}};
 }
 

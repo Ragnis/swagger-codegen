@@ -1,7 +1,6 @@
 {{>licenseInfo}}
 #include "{{classname}}.h"
 #include "{{prefix}}Helpers.h"
-#include "{{prefix}}ModelFactory.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -41,9 +40,9 @@ void
 
     {{#collectionFormat}}
 
-    if ({{{paramName}}}->size() > 0) {
+    if ({{{paramName}}}.size() > 0) {
       if (QString("{{collectionFormat}}").indexOf("multi") == 0) {
-        foreach({{{baseType}}} t, *{{paramName}}) {
+        foreach(const {{{baseType}}} &t, {{paramName}}) {
           if (fullPath.indexOf("?") > 0)
             fullPath.append("&");
           else 
@@ -58,7 +57,7 @@ void
           fullPath.append("?");
         fullPath.append("{{paramName}}=");
         qint32 count = 0;
-        foreach({{{baseType}}} t, *{{paramName}}) {
+        foreach(const {{{baseType}}} &t, {{paramName}}) {
           if (count > 0) {
             fullPath.append(" ");
           }
@@ -72,7 +71,7 @@ void
           fullPath.append("?");
         fullPath.append("{{paramName}}=");
         qint32 count = 0;
-        foreach({{{baseType}}} t, *{{paramName}}) {
+        foreach(const {{{baseType}}} &t, {{paramName}}) {
           if (count > 0) {
             fullPath.append("\t");
           }
@@ -87,17 +86,19 @@ void
     HttpRequestWorker *worker = new HttpRequestWorker();
     HttpRequestInput input(fullPath, "{{httpMethod}}");
 
-    {{#formParams}}if ({{paramName}} != NULL) {
-        {{^isFile}}input.add_var("{{paramName}}", *{{paramName}});{{/isFile}}{{#isFile}}input.add_file("{{paramName}}", (*{{paramName}}).local_filename, (*{{paramName}}).request_filename, (*{{paramName}}).mime_type);{{/isFile}}
-    }
+    {{#formParams}}
+        {{^isFile}}input.add_var("{{paramName}}", {{paramName}});{{/isFile}}
+        {{#isFile}}input.add_file("{{paramName}}", {{paramName}}.local_filename, {{paramName}}.request_filename, {{paramName}}.mime_type);{{/isFile}}
     {{/formParams}}
 
     {{#bodyParams}}
     {{#isContainer}}
-    QJsonArray* {{paramName}}Array = new QJsonArray();
-    toJsonArray((QList<void*>*){{paramName}}, {{paramName}}Array, QString("body"), QString("SWGUser*"));
+    QJsonArray {{paramName}}Array;
 
-    QJsonDocument doc(*{{paramName}}Array);
+    foreach (const {{complexType}} &item, {{paramName}})
+        {{paramName}}Array.append(item.toJsonObject());
+
+    QJsonDocument doc({{paramName}}Array);
     QByteArray bytes = doc.toJson();
 
     input.request_body.append(bytes);
@@ -137,11 +138,11 @@ void
     QJsonArray jsonArray = doc.array();
 
     foreach(QJsonValue obj, jsonArray) {
-        {{{returnBaseType}}}* o = new {{returnBaseType}}();
+        {{{returnBaseType}}} o;
         QJsonObject jv = obj.toObject();
         QJsonObject * ptr = (QJsonObject*)&jv;
-        o->fromJsonObject(*ptr);
-        output->append(o);
+        o.fromJsonObject(*ptr);
+        output.append(o);
     }
     {{/isListContainer}}
 
@@ -159,14 +160,15 @@ void
     foreach(QString key, obj.keys()) {
         qint32* val;
         setValue(&val, obj[key], "{{returnBaseType}}", "");
-        output->insert(key, *val);
+        output.insert(key, *val);
     }
 
 
     {{/isMapContainer}}
     {{^isMapContainer}}
     {{^returnTypeIsPrimitive}}QString json(worker->response);
-    {{{returnType}}} output = static_cast<{{{returnType}}}>(create(json, QString("{{{returnBaseType}}}")));
+    {{{returnType}}} output;
+    output.fromJson(json);
     {{/returnTypeIsPrimitive}}
     {{/isMapContainer}}
     {{/isListContainer}}{{/returnType}}

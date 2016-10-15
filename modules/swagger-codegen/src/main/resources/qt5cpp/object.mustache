@@ -2,22 +2,22 @@
 #ifndef _{{prefix}}_OBJECT_H_
 #define _{{prefix}}_OBJECT_H_
 
+#include <QJsonObject>
 #include <QJsonValue>
 
 class {{prefix}}Object {
   public:
-    virtual QJsonObject* asJsonObject() {
-      return NULL;
+    virtual QJsonObject asJsonObject() {
+        return QJsonObject();
     }
     virtual ~SWGObject() {}
-    virtual SWGObject* fromJson(QString &jsonString) {
+    virtual void fromJson(const QString &jsonString) {
         Q_UNUSED(jsonString);
-        return NULL;
     }
-    virtual void fromJsonObject(QJsonObject &json) {
+    virtual void fromJsonObject(const QJsonObject &json) {
         Q_UNUSED(json);
     }
-    virtual QString asJson() {
+    virtual QString asJson() const {
         return QString("");
     }
 };
